@@ -7,6 +7,10 @@ public enum XtoolMobileError: LocalizedError, Sendable {
     case invalidConfiguration(String)
     case invalidSDK(String)
     case sdkAlreadyInstalled(String)
+    case missingSDKComponent(String)
+    case invalidBuildPlan(String)
+    case toolExecutionUnavailable(String)
+    case toolFailed(tool: String, exitCode: Int32, output: String)
 
     public var errorDescription: String? {
         switch self {
@@ -22,6 +26,15 @@ public enum XtoolMobileError: LocalizedError, Sendable {
             return "Invalid embedded SDK: \(message)"
         case .sdkAlreadyInstalled(let identifier):
             return "An SDK with identifier '\(identifier)' is already installed."
+        case .missingSDKComponent(let component):
+            return "The embedded SDK is missing required component '\(component)'."
+        case .invalidBuildPlan(let message):
+            return "Invalid build plan: \(message)"
+        case .toolExecutionUnavailable(let tool):
+            return "No in-process executor is registered for '\(tool)'."
+        case .toolFailed(let tool, let exitCode, let output):
+            let detail = output.isEmpty ? "" : " \(output)"
+            return "\(tool) failed with exit code \(exitCode).\(detail)"
         }
     }
 }
