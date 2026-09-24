@@ -1,0 +1,44 @@
+name: Unified Native Toolchain
+
+on:
+  workflow_dispatch:
+    inputs:
+      swift_scheme:
+        description: Swift update-checkout scheme
+        required: true
+        default: release/6.2
+      deployment_target:
+        description: Minimum iOS version
+        required: true
+        default: "17.0"
+
+jobs:
+  unified-ios:
+    runs-on: macos-26
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install build tools
+        run: brew install cmake ninja
+
+      - name: Build revision-locked Swift Clang LLD
+        env:
+          SWIFT_SCHEME: ${{ inputs.swift_scheme }}
+          IOS_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+        run: |
+          chmod +x Scripts/build-unified-toolchain-ios.sh
+          Scripts/build-unified-toolchain-ios.sh
+
+      - name: Package and validate unified compiler
+        run: |
+          chmod +x Scripts/package-unified-toolchain-ios.sh
+          Scripts/package-unified-toolchain-ios.sh
+
+      - name: Upload unified compiler artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: XtoolUnifiedCompiler-ios-arm64
+          path: .unified-toolchain/XtoolUnifiedCompiler-ios-arm64.tar.gz
+          if-no-files-found: error
