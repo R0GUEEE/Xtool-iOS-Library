@@ -35,10 +35,12 @@
 - [ ] concrete embedded Swift/LLVM entry-point bridge
 
 ## 0.5 — Packaging/signing
-- [ ] app bundle assembly
-- [ ] entitlements
-- [ ] code signing through XKit-compatible primitives
-- [ ] IPA export
+- [x] app bundle assembly
+- [x] entitlements
+- [x] code signing through XKit-compatible primitives
+- [x] IPA export
+- [x] subprocess-free pure Swift ZIP writer
+- [ ] provisioning/profile generation through XKit DeveloperServices
 
 ## 1.0
 - [ ] Build a minimal SwiftUI app entirely inside an iOS application
