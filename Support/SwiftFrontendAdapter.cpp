@@ -19,7 +19,6 @@ static int32_t xtool_host_swift_frontend(
     const char * const *argv,
     const char *working_directory
 ) {
-    // XtoolMobileKit emits absolute source, SDK, resource and output paths.
     (void)working_directory;
 
     static std::once_flag initialize_once;
@@ -64,4 +63,9 @@ extern "C" void xtool_register_host_swift_frontend(void) {
     xtool_register_swift_frontend(
         xtool_host_swift_frontend
     );
+}
+
+__attribute__((constructor))
+static void xtool_auto_register_host_swift_frontend(void) {
+    xtool_register_host_swift_frontend();
 }
