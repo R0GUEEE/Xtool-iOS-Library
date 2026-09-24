@@ -67,6 +67,13 @@ public struct XtoolClangCompilerAdapter: Sendable {
             "-o", output.path
         ]
 
+        if let relative = toolchain.sdk.manifest.clangResourcesPath {
+            arguments += [
+                "-resource-dir",
+                toolchain.sdk.rootURL.appendingPathComponent(relative).path
+            ]
+        }
+
         for relative in toolchain.sdk.manifest.includeSearchPaths {
             arguments += [
                 "-I",
