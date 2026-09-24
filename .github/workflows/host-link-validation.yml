@@ -1,36 +1,39 @@
 name: Host Link Validation
 
 on:
-  workflow_run:
-    workflows:
-      - Unified Native Toolchain
-    types:
-      - completed
+  workflow_dispatch:
+    inputs:
+      compiler_tag:
+        description: Compiler release tag, or latest
+        required: true
+        default: latest
+  push:
+    branches:
+      - main
+    paths:
+      - "Support/SwiftFrontendAdapter.cpp"
+      - "Support/ClangAdapter.cpp"
+      - "Support/LLDMachOAdapter.cpp"
+      - "Sources/CXtoolCompilerBridge/**"
+      - "Scripts/link-host-probe-ios.sh"
 
 jobs:
   link-ios-host:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: macos-26
     timeout-minutes: 45
     permissions:
-      actions: read
       contents: read
 
     steps:
       - uses: actions/checkout@v6
 
-      - name: Download unified compiler artifact
-        uses: actions/download-artifact@v5
-        with:
-          name: XtoolUnifiedCompiler-ios-arm64
-          path: .artifacts/unified
-          github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Extract unified compiler
+      - name: Download prebuilt compiler release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMPILER_TAG: ${{ inputs.compiler_tag || 'latest' }}
         run: |
-          mkdir -p .artifacts/toolchain
-          tar -xzf             .artifacts/unified/XtoolUnifiedCompiler-ios-arm64.tar.gz             -C .artifacts/toolchain
+          chmod +x Scripts/fetch-prebuilt-compiler.sh
+          Scripts/fetch-prebuilt-compiler.sh             "$COMPILER_TAG"             .artifacts/toolchain
 
       - name: Link iOS compiler host probe
         env:
@@ -54,12 +57,4 @@ jobs:
         with:
           name: XtoolCompilerHostProbe-ios-arm64
           path: .host-link-probe/XtoolCompilerHostProbe
-          if-no-files-found: error
-
-      - name: Promote validated compiler artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: XtoolValidatedUnifiedCompiler-ios-arm64
-          path: .artifacts/unified/XtoolUnifiedCompiler-ios-arm64.tar.gz
           if-no-files-found: error
