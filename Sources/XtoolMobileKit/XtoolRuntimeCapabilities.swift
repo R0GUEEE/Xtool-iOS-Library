@@ -8,11 +8,13 @@ public struct XtoolRuntimeCapabilities: Sendable, Equatable {
 
     public static var current: Self {
         #if os(iOS)
+        let native = XtoolNativeCompilerBridge.currentCapabilities
+
         return .init(
             canUseXKit: true,
             canSpawnProcesses: false,
             canAccessBundledToolchains: true,
-            canBuildOnDevice: false
+            canBuildOnDevice: native.canCompileAndLink
         )
         #else
         return .init(
