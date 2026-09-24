@@ -52,6 +52,34 @@ cmake --build "$BUILD_CMARK_NATIVE" --target cmark-gfm
 mkdir -p "$BUILD_CMARK_NATIVE/src"
 ln -sf "$BUILD_CMARK_NATIVE/src/cmark-gfm" "$BUILD_CMARK_NATIVE/src/cmark"
 
+# Swift 6.2's host-tool CMake logic treats CMAKE_SYSTEM_NAME=iOS as non-Darwin
+# in two places. For an iPhoneOS compiler build, use Darwin's system libdispatch
+# and UUID support rather than attempting Linux-style dependency discovery.
+python3 - "$SWIFT_SRC" <<'PY'
+from pathlib import Path
+import sys
+
+swift = Path(sys.argv[1])
+
+libdispatch = swift / "cmake/modules/Libdispatch.cmake"
+text = libdispatch.read_text()
+old = 'if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")'
+new = 'if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")'
+if old not in text:
+    raise SystemExit("Expected Libdispatch.cmake Darwin condition not found")
+text = text.replace(old, new, 1)
+libdispatch.write_text(text)
+
+basic = swift / "lib/Basic/CMakeLists.txt"
+text = basic.read_text()
+old = 'if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")'
+new = 'if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")'
+if old not in text:
+    raise SystemExit("Expected Basic/CMakeLists.txt Darwin condition not found")
+text = text.replace(old, new, 1)
+basic.write_text(text)
+PY
+
 LLVM_TBLGEN="$BUILD_NATIVE/bin/llvm-tblgen"
 CLANG_TBLGEN="$BUILD_NATIVE/bin/clang-tblgen"
 C_FLAGS="-arch arm64 -target $TARGET_TRIPLE"
