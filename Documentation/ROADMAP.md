@@ -16,11 +16,14 @@
 - [ ] editable project configuration writer
 
 ## 0.3 — Embedded SDK
-- [ ] SDK bundle format
-- [ ] SDK installer/importer
-- [ ] storage validation
-- [ ] version compatibility checks
-- [ ] SDK manifest with tool/component hashes
+- [x] SDK bundle format
+- [x] SDK installer/importer
+- [x] storage validation
+- [x] version compatibility checks
+- [x] SDK manifest with tool/component hashes
+- [ ] archive importer for .zip/.tar payloads
+- [ ] SDK selection policy
+- [ ] disk-space preflight
 
 ## 0.4 — Native compiler backend
 - [ ] Swift compiler adapter
