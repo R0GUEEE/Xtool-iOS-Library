@@ -26,11 +26,13 @@
 - [ ] disk-space preflight
 
 ## 0.4 — Native compiler backend
-- [ ] Swift compiler adapter
-- [ ] clang adapter
-- [ ] linker adapter
+- [x] Swift compiler adapter
+- [x] clang adapter
+- [x] linker adapter
 - [ ] resource compiler integration
-- [ ] subprocess-free execution strategy for iOS
+- [x] subprocess-free execution API for iOS
+- [x] explicit compile/link build plans
+- [ ] concrete embedded Swift/LLVM entry-point bridge
 
 ## 0.5 — Packaging/signing
 - [ ] app bundle assembly
