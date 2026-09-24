@@ -1,0 +1,44 @@
+name: Swift Frontend Toolchain
+
+on:
+  workflow_dispatch:
+    inputs:
+      swift_scheme:
+        description: Swift update-checkout scheme
+        required: true
+        default: release/6.2
+      deployment_target:
+        description: Minimum iOS version
+        required: true
+        default: "17.0"
+
+jobs:
+  swift-frontend-ios:
+    runs-on: macos-26
+    timeout-minutes: 300
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install build tools
+        run: brew install cmake ninja
+
+      - name: Build Swift frontend for iOS
+        env:
+          SWIFT_SCHEME: ${{ inputs.swift_scheme }}
+          IOS_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+        run: |
+          chmod +x Scripts/build-swift-frontend-ios.sh
+          Scripts/build-swift-frontend-ios.sh
+
+      - name: Package Swift frontend
+        run: |
+          chmod +x Scripts/package-swift-frontend-ios.sh
+          Scripts/package-swift-frontend-ios.sh
+
+      - name: Upload Swift frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: XtoolSwiftFrontend-ios-arm64
+          path: .native-swift/XtoolSwiftFrontend-ios-arm64.tar.gz
+          if-no-files-found: error
