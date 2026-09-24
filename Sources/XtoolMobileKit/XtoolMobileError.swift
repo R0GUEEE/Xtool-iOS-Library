@@ -4,6 +4,7 @@ public enum XtoolMobileError: LocalizedError, Sendable {
     case onDeviceCompilerBackendNotInstalled
     case unsupportedRuntime
     case missingWorkspace(URL)
+    case invalidConfiguration(String)
 
     public var errorDescription: String? {
         switch self {
@@ -12,7 +13,9 @@ public enum XtoolMobileError: LocalizedError, Sendable {
         case .unsupportedRuntime:
             return "This operation is not supported by the current runtime."
         case .missingWorkspace(let url):
-            return "No Swift package workspace exists at \(url.path)."
+            return "No Xtool workspace exists at or above \(url.path)."
+        case .invalidConfiguration(let message):
+            return message
         }
     }
 }
