@@ -53,6 +53,8 @@
 - [x] provisioning/profile generation through XKit DeveloperServices
 
 ## 1.0
-- [ ] Build a minimal SwiftUI app entirely inside an iOS application
+- [x] native SwiftUI host app scaffold
+- [x] automatic validated-toolchain host app build workflow
+- [ ] build a minimal SwiftUI app entirely inside an iOS application using the validated compiler artifact
 - [ ] Sign/export the resulting IPA
 - [x] documented host-app integration API
