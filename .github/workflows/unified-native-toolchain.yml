@@ -11,6 +11,11 @@ on:
         description: Minimum iOS version
         required: true
         default: "17.0"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/unified-native-toolchain.yml"
 
 jobs:
   unified-ios:
@@ -25,8 +30,8 @@ jobs:
 
       - name: Build revision-locked Swift Clang LLD
         env:
-          SWIFT_SCHEME: ${{ inputs.swift_scheme }}
-          IOS_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+          SWIFT_SCHEME: ${{ inputs.swift_scheme || 'release/6.2' }}
+          IOS_DEPLOYMENT_TARGET: ${{ inputs.deployment_target || '17.0' }}
         run: |
           chmod +x Scripts/build-unified-toolchain-ios.sh
           Scripts/build-unified-toolchain-ios.sh
