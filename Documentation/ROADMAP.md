@@ -34,7 +34,8 @@
 - [x] explicit compile/link build plans
 - [x] embedded Swift/LLVM bridge API
 - [ ] concrete native Swift frontend bridge implementation
-- [ ] concrete native Clang/LLD bridge implementation
+- [ ] concrete native Clang bridge implementation
+- [x] Mach-O LLD adapter integration layer
 
 ## 0.5 — Packaging/signing
 - [x] app bundle assembly
