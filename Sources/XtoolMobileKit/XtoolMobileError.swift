@@ -5,6 +5,8 @@ public enum XtoolMobileError: LocalizedError, Sendable {
     case unsupportedRuntime
     case missingWorkspace(URL)
     case invalidConfiguration(String)
+    case invalidSDK(String)
+    case sdkAlreadyInstalled(String)
 
     public var errorDescription: String? {
         switch self {
@@ -16,6 +18,10 @@ public enum XtoolMobileError: LocalizedError, Sendable {
             return "No Xtool workspace exists at or above \(url.path)."
         case .invalidConfiguration(let message):
             return message
+        case .invalidSDK(let message):
+            return "Invalid embedded SDK: \(message)"
+        case .sdkAlreadyInstalled(let identifier):
+            return "An SDK with identifier '\(identifier)' is already installed."
         }
     }
 }
