@@ -25,8 +25,13 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "CXtoolCompilerBridge",
+            publicHeadersPath: "include"
+        ),
+        .target(
             name: "XtoolMobileKit",
             dependencies: [
+                "CXtoolCompilerBridge",
                 .product(name: "XKit", package: "xtool"),
                 .product(name: "Yams", package: "Yams")
             ]
