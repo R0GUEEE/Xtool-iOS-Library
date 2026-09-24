@@ -1,0 +1,60 @@
+name: Native Host App
+
+on:
+  workflow_run:
+    workflows:
+      - Host Link Validation
+    types:
+      - completed
+
+jobs:
+  build-host-app:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: macos-26
+    timeout-minutes: 60
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download validated compiler
+        uses: actions/download-artifact@v5
+        with:
+          name: XtoolValidatedUnifiedCompiler-ios-arm64
+          path: .artifacts/unified
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Install compiler artifact
+        run: |
+          chmod +x Scripts/install-unified-toolchain-artifact.sh
+          Scripts/install-unified-toolchain-artifact.sh             .artifacts/unified/XtoolUnifiedCompiler-ios-arm64.tar.gz             Examples/NativeHostApp/Vendor/XtoolUnifiedCompiler
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: Examples/NativeHostApp
+        run: xcodegen generate
+
+      - name: Build unsigned iOS host app
+        working-directory: Examples/NativeHostApp
+        run: |
+          set -o pipefail
+          xcodebuild build             -project XtoolNativeHostApp.xcodeproj             -scheme XtoolNativeHostApp             -destination generic/platform=iOS             CODE_SIGNING_ALLOWED=NO             | xcbeautify
+
+      - name: Package unsigned host app
+        working-directory: Examples/NativeHostApp
+        run: |
+          APP="$(find ~/Library/Developer/Xcode/DerivedData             -type d -path '*/Build/Products/Debug-iphoneos/XtoolNativeHostApp.app'             | head -n 1)"
+          test -n "$APP"
+          ditto -c -k --sequesterRsrc --keepParent             "$APP"             XtoolNativeHostApp-unsigned.zip
+
+      - name: Upload unsigned host app
+        uses: actions/upload-artifact@v4
+        with:
+          name: XtoolNativeHostApp-unsigned
+          path: Examples/NativeHostApp/XtoolNativeHostApp-unsigned.zip
+          if-no-files-found: error
