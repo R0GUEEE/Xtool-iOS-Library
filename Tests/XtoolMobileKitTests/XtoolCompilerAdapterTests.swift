@@ -14,7 +14,7 @@ private func testSDK() -> XtoolSDK {
             .init(
                 id: "swiftc",
                 kind: .swiftCompiler,
-                relativePath: "usr/bin/swiftc",
+                relativePath: "usr/bin/swift-frontend",
                 sha256: hash,
                 executable: true
             ),
@@ -48,7 +48,7 @@ private func testSDK() -> XtoolSDK {
 }
 
 @Test
-func swiftCompilerCreatesIOSInvocation() throws {
+func swiftCompilerCreatesIOSFrontendInvocation() throws {
     let adapter = XtoolSwiftCompilerAdapter(
         toolchain: .init(sdk: testSDK()),
         executor: UnavailableIOSToolExecutor()
@@ -63,9 +63,10 @@ func swiftCompilerCreatesIOSInvocation() throws {
         )
     )
 
+    #expect(invocation.arguments.first == "-frontend")
+    #expect(invocation.arguments.contains("-c"))
     #expect(invocation.arguments.contains("arm64-apple-ios17.0"))
     #expect(invocation.arguments.contains("/toolchain/SDKs/iPhoneOS.sdk"))
-    #expect(invocation.arguments.contains("-emit-object"))
 }
 
 @Test
