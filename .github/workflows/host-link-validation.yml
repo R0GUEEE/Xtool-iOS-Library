@@ -1,0 +1,57 @@
+name: Host Link Validation
+
+on:
+  workflow_run:
+    workflows:
+      - Unified Native Toolchain
+    types:
+      - completed
+
+jobs:
+  link-ios-host:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: macos-26
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download unified compiler artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: XtoolUnifiedCompiler-ios-arm64
+          path: .artifacts/unified
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Extract unified compiler
+        run: |
+          mkdir -p .artifacts/toolchain
+          tar -xzf             .artifacts/unified/XtoolUnifiedCompiler-ios-arm64.tar.gz             -C .artifacts/toolchain
+
+      - name: Link iOS compiler host probe
+        env:
+          TOOLCHAIN_ROOT: ${{ github.workspace }}/.artifacts/toolchain
+          IOS_DEPLOYMENT_TARGET: "17.0"
+        run: |
+          chmod +x Scripts/link-host-probe-ios.sh
+          Scripts/link-host-probe-ios.sh
+
+      - name: Upload linker diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: XtoolHostLinkDiagnostics
+          path: .host-link-probe/linker-errors.txt
+          if-no-files-found: ignore
+
+      - name: Upload host-link probe
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: XtoolCompilerHostProbe-ios-arm64
+          path: .host-link-probe/XtoolCompilerHostProbe
+          if-no-files-found: error
