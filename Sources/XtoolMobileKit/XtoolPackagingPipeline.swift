@@ -7,8 +7,8 @@ public struct XtoolPackagingPipeline: Sendable {
 
     public init(
         assembler: XtoolAppBundleAssembler = .init(),
-        signer: any XtoolSigner,
-        archiveExecutor: any XtoolArchiveExecutor
+        signer: any XtoolSigner = XKitAppSigner(),
+        archiveExecutor: any XtoolArchiveExecutor = XtoolStoredZIPArchiveExecutor()
     ) {
         self.assembler = assembler
         self.signer = signer
