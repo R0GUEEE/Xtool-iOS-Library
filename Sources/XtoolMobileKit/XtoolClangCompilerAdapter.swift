@@ -67,6 +67,20 @@ public struct XtoolClangCompilerAdapter: Sendable {
             "-o", output.path
         ]
 
+        for relative in toolchain.sdk.manifest.includeSearchPaths {
+            arguments += [
+                "-I",
+                toolchain.sdk.rootURL.appendingPathComponent(relative).path
+            ]
+        }
+
+        for relative in toolchain.sdk.manifest.frameworkSearchPaths {
+            arguments += [
+                "-F",
+                toolchain.sdk.rootURL.appendingPathComponent(relative).path
+            ]
+        }
+
         for include in options.includeSearchPaths {
             arguments += ["-I", include.path]
         }
