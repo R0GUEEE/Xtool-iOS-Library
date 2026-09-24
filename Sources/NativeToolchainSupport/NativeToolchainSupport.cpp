@@ -1,12 +1,73 @@
 #include "NativeToolchainSupport.h"
 #include "CXtoolCompilerBridge.h"
 
+#ifndef XTOOL_ENABLE_EMBEDDED_SWIFT_FRONTEND
+#define XTOOL_ENABLE_EMBEDDED_SWIFT_FRONTEND 0
+#endif
+
 #ifndef XTOOL_ENABLE_EMBEDDED_CLANG
 #define XTOOL_ENABLE_EMBEDDED_CLANG 0
 #endif
 
 #ifndef XTOOL_ENABLE_EMBEDDED_LLD
 #define XTOOL_ENABLE_EMBEDDED_LLD 0
+#endif
+
+#if XTOOL_ENABLE_EMBEDDED_SWIFT_FRONTEND
+
+#include "swift/Basic/InitializeSwiftModules.h"
+#include "swift/FrontendTool/FrontendTool.h"
+#include "llvm/ADT/ArrayRef.h"
+
+#include <cstring>
+#include <mutex>
+#include <vector>
+
+static int32_t xtool_swift_frontend_entrypoint(
+    int32_t argc,
+    const char * const *argv,
+    const char *working_directory
+) {
+    (void)working_directory;
+
+    static std::once_flag initialize_once;
+    std::call_once(
+        initialize_once,
+        [] {
+            swift::initializeSwiftModules();
+        }
+    );
+
+    int32_t start = 0;
+    if (argc > 0 && std::strcmp(argv[0], "-frontend") == 0) {
+        start = 1;
+    }
+
+    std::vector<const char *> arguments;
+    arguments.reserve(
+        static_cast<size_t>(argc - start)
+    );
+
+    for (int32_t index = start; index < argc; ++index) {
+        arguments.push_back(argv[index]);
+    }
+
+    return static_cast<int32_t>(
+        swift::performFrontend(
+            llvm::ArrayRef<const char *>(
+                arguments.data(),
+                arguments.size()
+            ),
+            "swift-frontend",
+            reinterpret_cast<void *>(
+                reinterpret_cast<uintptr_t>(
+                    &xtool_swift_frontend_entrypoint
+                )
+            )
+        )
+    );
+}
+
 #endif
 
 #if XTOOL_ENABLE_EMBEDDED_CLANG
@@ -103,6 +164,12 @@ static int32_t xtool_lld_macho_entrypoint(
 #endif
 
 void xtool_native_toolchain_register_available_backends(void) {
+#if XTOOL_ENABLE_EMBEDDED_SWIFT_FRONTEND
+    xtool_register_swift_frontend(
+        xtool_swift_frontend_entrypoint
+    );
+#endif
+
 #if XTOOL_ENABLE_EMBEDDED_CLANG
     xtool_register_clang(
         xtool_clang_entrypoint
@@ -113,6 +180,14 @@ void xtool_native_toolchain_register_available_backends(void) {
     xtool_register_lld_macho(
         xtool_lld_macho_entrypoint
     );
+#endif
+}
+
+int32_t xtool_native_toolchain_has_swift_frontend(void) {
+#if XTOOL_ENABLE_EMBEDDED_SWIFT_FRONTEND
+    return 1;
+#else
+    return 0;
 #endif
 }
 
