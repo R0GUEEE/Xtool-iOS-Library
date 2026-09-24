@@ -48,7 +48,9 @@ cmake --build "$BUILD_NATIVE" --target   llvm-tblgen   clang-tblgen
 # Swift's configure step executes cmark --version, so provide a native macOS
 # cmark tool while the iOS external-project graph builds libcmark-gfm for iOS.
 cmake -S "$SOURCE_ROOT/cmark" -B "$BUILD_CMARK_NATIVE" -G Ninja   -DCMAKE_BUILD_TYPE="$BUILD_TYPE"   -DCMAKE_OSX_SYSROOT="$MACOS_SDK"   -DCMARK_TESTS=OFF
-cmake --build "$BUILD_CMARK_NATIVE" --target cmark
+cmake --build "$BUILD_CMARK_NATIVE" --target cmark-gfm
+mkdir -p "$BUILD_CMARK_NATIVE/src"
+ln -sf "$BUILD_CMARK_NATIVE/src/cmark-gfm" "$BUILD_CMARK_NATIVE/src/cmark"
 
 LLVM_TBLGEN="$BUILD_NATIVE/bin/llvm-tblgen"
 CLANG_TBLGEN="$BUILD_NATIVE/bin/clang-tblgen"
