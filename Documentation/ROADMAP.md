@@ -36,10 +36,13 @@
 - [x] Swift frontend adapter integration layer
 - [x] Clang adapter integration layer
 - [x] Mach-O LLD adapter integration layer
-- [x] reproducible iOS Swift frontend static-library build pipeline
-- [ ] validate produced Swift frontend artifact and final host link set
-- [x] reproducible iOS Clang + LLD static-library build pipeline
-- [ ] validate produced Clang + LLD artifact and final host link set
+- [x] revision-locked unified Swift + Clang + LLD build pipeline
+- [x] merged native compiler archive packaging
+- [x] compiler artifact symbol/architecture validation
+- [x] automatic host-link validation workflow
+- [x] host-app xcconfig and auto-registration adapters
+- [ ] run unified toolchain workflow and validate first artifact
+- [ ] resolve first host-link diagnostics, if any
 
 ## 0.5 — Packaging/signing
 - [x] app bundle assembly
@@ -52,4 +55,4 @@
 ## 1.0
 - [ ] Build a minimal SwiftUI app entirely inside an iOS application
 - [ ] Sign/export the resulting IPA
-- [ ] documented host-app integration API
+- [x] documented host-app integration API
