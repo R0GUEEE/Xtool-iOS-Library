@@ -36,8 +36,10 @@
 - [x] Swift frontend adapter integration layer
 - [x] Clang adapter integration layer
 - [x] Mach-O LLD adapter integration layer
-- [ ] produce/link iOS-compatible Swift frontend static libraries
-- [ ] produce/link iOS-compatible Clang + LLD static libraries
+- [x] reproducible iOS Swift frontend static-library build pipeline
+- [ ] validate produced Swift frontend artifact and final host link set
+- [x] reproducible iOS Clang + LLD static-library build pipeline
+- [ ] validate produced Clang + LLD artifact and final host link set
 
 ## 0.5 — Packaging/signing
 - [x] app bundle assembly
