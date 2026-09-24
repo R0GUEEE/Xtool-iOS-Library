@@ -42,6 +42,7 @@ public struct XtoolSDKManifest: Codable, Sendable, Equatable {
     public let targetTriple: String
     public let minimumIOSVersion: String
     public let swiftResourcesPath: String?
+    public let clangResourcesPath: String?
     public let includeSearchPaths: [String]
     public let librarySearchPaths: [String]
     public let frameworkSearchPaths: [String]
@@ -56,6 +57,7 @@ public struct XtoolSDKManifest: Codable, Sendable, Equatable {
         targetTriple: String = "arm64-apple-ios",
         minimumIOSVersion: String,
         swiftResourcesPath: String? = nil,
+        clangResourcesPath: String? = nil,
         includeSearchPaths: [String] = [],
         librarySearchPaths: [String] = [],
         frameworkSearchPaths: [String] = [],
@@ -69,6 +71,7 @@ public struct XtoolSDKManifest: Codable, Sendable, Equatable {
         self.targetTriple = targetTriple
         self.minimumIOSVersion = minimumIOSVersion
         self.swiftResourcesPath = swiftResourcesPath
+        self.clangResourcesPath = clangResourcesPath
         self.includeSearchPaths = includeSearchPaths
         self.librarySearchPaths = librarySearchPaths
         self.frameworkSearchPaths = frameworkSearchPaths
@@ -98,7 +101,7 @@ public struct XtoolSDKManifest: Codable, Sendable, Equatable {
         }
 
         let declaredPaths =
-            [swiftResourcesPath].compactMap { $0 }
+            [swiftResourcesPath, clangResourcesPath].compactMap { $0 }
             + includeSearchPaths
             + librarySearchPaths
             + frameworkSearchPaths
