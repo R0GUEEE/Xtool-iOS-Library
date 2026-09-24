@@ -2,33 +2,37 @@
 
 ## 0.1 — XKit bridge
 - [x] SwiftPM library
-- [x] iOS 16+ deployment target
+- [x] iOS 17+ deployment target
 - [x] XKit dependency
 - [x] runtime capability model
 - [x] build backend protocol
 
 ## 0.2 — Project model
-- [ ] Parse `xtool.yml`
-- [ ] Swift package workspace discovery
-- [ ] app metadata model
-- [ ] build log/event stream
+- [x] Parse `xtool.yml`
+- [x] Swift package workspace discovery
+- [x] app metadata model compatible with Xtool schema v1
+- [x] build log/event stream
+- [ ] package target/product inspection
+- [ ] editable project configuration writer
 
 ## 0.3 — Embedded SDK
 - [ ] SDK bundle format
 - [ ] SDK installer/importer
 - [ ] storage validation
 - [ ] version compatibility checks
+- [ ] SDK manifest with tool/component hashes
 
 ## 0.4 — Native compiler backend
 - [ ] Swift compiler adapter
 - [ ] clang adapter
 - [ ] linker adapter
 - [ ] resource compiler integration
+- [ ] subprocess-free execution strategy for iOS
 
 ## 0.5 — Packaging/signing
 - [ ] app bundle assembly
 - [ ] entitlements
-- [ ] code signing
+- [ ] code signing through XKit-compatible primitives
 - [ ] IPA export
 
 ## 1.0
