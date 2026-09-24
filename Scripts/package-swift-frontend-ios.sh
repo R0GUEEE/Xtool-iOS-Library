@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT="${ROOT:-$PWD/.native-swift}"
 INSTALL="${INSTALL:-$ROOT/install-swift-ios}"
 OUTPUT="${OUTPUT:-$ROOT/XtoolSwiftFrontend-ios-arm64.tar.gz}"
+MERGED="$INSTALL/libXtoolSwiftFrontend.a"
+MANIFEST="$INSTALL/XtoolSwiftFrontend.libraries.txt"
 
 if [ ! -d "$INSTALL/lib" ]; then
   echo "Missing Swift frontend install tree: $INSTALL" >&2
@@ -17,8 +19,13 @@ if [ "$LIB_COUNT" = "0" ]; then
   exit 1
 fi
 
+chmod +x Scripts/merge-static-archives.sh
+Scripts/merge-static-archives.sh   "$INSTALL/lib"   "$MERGED"   "$MANIFEST"
+
 mkdir -p "$(dirname "$OUTPUT")"
 tar -C "$INSTALL" -czf "$OUTPUT" .
 
 echo "Packaged $LIB_COUNT static libraries:"
 echo "  $OUTPUT"
+echo "Merged frontend archive:"
+echo "  $MERGED"
