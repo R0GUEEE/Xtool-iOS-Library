@@ -1,11 +1,7 @@
 // Reference implementation for embedding LLVM LLD's Mach-O driver.
 //
 // This file is intentionally outside the SwiftPM target. A host application
-// that builds and links LLVM/LLD can compile this source with:
-//   - lld headers on the include path
-//   - lldMachO and required LLVM libraries linked
-//
-// The stable interface back into XtoolMobileKit is CXtoolCompilerBridge.
+// links it with the revision-matched unified compiler archive.
 
 #include "CXtoolCompilerBridge.h"
 
@@ -23,8 +19,6 @@ static int32_t xtool_host_lld_macho(
     const char * const *argv,
     const char *working_directory
 ) {
-    // XtoolMobileKit currently emits absolute build paths, so this adapter
-    // intentionally avoids process-global chdir().
     (void)working_directory;
 
     std::vector<const char *> arguments;
@@ -59,4 +53,9 @@ extern "C" void xtool_register_host_lld_macho(void) {
     xtool_register_lld_macho(
         xtool_host_lld_macho
     );
+}
+
+__attribute__((constructor))
+static void xtool_auto_register_host_lld_macho(void) {
+    xtool_register_host_lld_macho();
 }
