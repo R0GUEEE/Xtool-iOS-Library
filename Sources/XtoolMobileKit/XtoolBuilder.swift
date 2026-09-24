@@ -4,20 +4,33 @@ public protocol XtoolBuilder: Sendable {
     func build(_ request: XtoolBuildRequest) async throws -> XtoolBuildResult
 }
 
-/// Initial iOS implementation.
-///
-/// The reusable XKit layer is already linkable from iOS. The actual on-device
-/// compiler/toolchain execution layer is intentionally separated behind this
-/// protocol so it can later be implemented with native embedded toolchain
-/// components instead of `Process`.
 public struct NativeIOSXtoolBuilder: XtoolBuilder {
-    public init() {}
+    public let backend: any XtoolBuildBackend
 
-    public func build(_ request: XtoolBuildRequest) async throws -> XtoolBuildResult {
-        #if os(iOS)
-        throw XtoolMobileError.onDeviceCompilerBackendNotInstalled
-        #else
-        throw XtoolMobileError.unsupportedRuntime
-        #endif
+    public init(
+        backend: any XtoolBuildBackend = UnavailableIOSBuildBackend()
+    ) {
+        self.backend = backend
+    }
+
+    public func build(
+        _ request: XtoolBuildRequest
+    ) async throws -> XtoolBuildResult {
+        try await build(request, events: { _ in })
+    }
+
+    public func build(
+        _ request: XtoolBuildRequest,
+        events: @escaping @Sendable (XtoolBuildEvent) -> Void
+    ) async throws -> XtoolBuildResult {
+        let inspection = try XtoolWorkspaceInspector.inspect(request.workspace)
+
+        guard inspection.isReady else {
+            throw XtoolMobileError.invalidConfiguration(
+                "Workspace requires both Package.swift and a valid xtool.yml."
+            )
+        }
+
+        return try await backend.build(request, events: events)
     }
 }
