@@ -5,23 +5,28 @@
 
 #include "CXtoolCompilerBridge.h"
 
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/FrontendTool/Utils.h"
 #include "clang/Serialization/PCHContainerOperations.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/Host.h"
 
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
 
 static int32_t xtool_run_clang_driver_in_process(
@@ -47,17 +52,40 @@ static int32_t xtool_run_clang_driver_in_process(
         arguments.push_back(argv[index]);
     }
 
-    clang::DiagnosticOptions diagnosticOptions;
+    // DiagnosticOptions is refcounted in the revision this is built against
+    // (swiftlang/llvm-project swift/release/6.2), the printer takes the raw
+    // pointer inside that reference, and the engine takes both:
+    //
+    //   DiagnosticsEngine(IntrusiveRefCntPtr<DiagnosticIDs>,
+    //                     IntrusiveRefCntPtr<DiagnosticOptions>,
+    //                     DiagnosticConsumer *client = nullptr,
+    //                     bool ShouldOwnClient = true)
+    //   TextDiagnosticPrinter(raw_ostream &os, DiagnosticOptions *diags, ...)
+    auto diagnosticOptions =
+        llvm::makeIntrusiveRefCnt<clang::DiagnosticOptions>();
     auto fileSystem = llvm::vfs::getRealFileSystem();
-    auto diagnostics = clang::CompilerInstance::createDiagnostics(
-        *fileSystem,
-        diagnosticOptions
+    std::string diagnosticText;
+    llvm::raw_string_ostream diagnosticStream(diagnosticText);
+    auto diagnosticPrinter =
+        std::make_unique<clang::TextDiagnosticPrinter>(
+            diagnosticStream,
+            diagnosticOptions.get()
+        );
+    auto diagnosticIDs =
+        llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs>(
+            new clang::DiagnosticIDs()
+        );
+    clang::DiagnosticsEngine diagnostics(
+        diagnosticIDs,
+        diagnosticOptions,
+        diagnosticPrinter.get(),
+        false
     );
 
     clang::driver::Driver driver(
         arguments[0],
         llvm::sys::getDefaultTargetTriple(),
-        *diagnostics
+        diagnostics
     );
     driver.setCheckInputsExist(true);
 
@@ -91,7 +119,7 @@ static int32_t xtool_run_clang_driver_in_process(
     if (!clang::CompilerInvocation::CreateFromArgs(
             *invocation,
             cc1Arguments,
-            *diagnostics,
+            diagnostics,
             arguments[0]
         )) {
         return 1;
@@ -100,10 +128,13 @@ static int32_t xtool_run_clang_driver_in_process(
     auto pchOperations =
         std::make_shared<clang::PCHContainerOperations>();
 
+    // The instance takes the PCH container factory in its constructor and the
+    // invocation through setInvocation(); there is no constructor that takes a
+    // CompilerInvocation, refcounted or otherwise.
     auto compiler = std::make_unique<clang::CompilerInstance>(
-        std::move(invocation),
         std::move(pchOperations)
     );
+    compiler->setInvocation(std::move(invocation));
     compiler->setVirtualFileSystem(fileSystem);
     compiler->createDiagnostics();
 
