@@ -29,9 +29,15 @@ let package = Package(
             publicHeadersPath: "include"
         ),
         .target(
+            name: "NativeToolchainSupport",
+            dependencies: ["CXtoolCompilerBridge"],
+            publicHeadersPath: "include"
+        ),
+        .target(
             name: "XtoolMobileKit",
             dependencies: [
                 "CXtoolCompilerBridge",
+                "NativeToolchainSupport",
                 .product(name: "XKit", package: "xtool"),
                 .product(name: "Yams", package: "Yams")
             ]
@@ -40,5 +46,6 @@ let package = Package(
             name: "XtoolMobileKitTests",
             dependencies: ["XtoolMobileKit"]
         )
-    ]
+    ],
+    cxxLanguageStandard: .cxx17
 )
