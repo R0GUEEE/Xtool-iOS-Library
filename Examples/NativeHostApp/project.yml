@@ -1,0 +1,62 @@
+name: XtoolNativeHostApp
+
+options:
+  minimumXcodeGenVersion: 2.38.0
+  deploymentTarget:
+    iOS: "17.0"
+
+packages:
+  XtoolMobileKit:
+    path: ../..
+
+targets:
+  XtoolNativeHostApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+
+    sources:
+      - path: Sources
+      - path: ../../Support/SwiftFrontendAdapter.cpp
+      - path: ../../Support/ClangAdapter.cpp
+      - path: ../../Support/LLDMachOAdapter.cpp
+      - path: ../../Sources/CXtoolCompilerBridge/CXtoolCompilerBridge.c
+
+    dependencies:
+      - package: XtoolMobileKit
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.XtoolNativeHostApp
+        PRODUCT_NAME: XtoolNativeHostApp
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        CODE_SIGN_STYLE: Automatic
+        CLANG_CXX_LANGUAGE_STANDARD: c++17
+        CLANG_CXX_LIBRARY: libc++
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/Vendor/XtoolUnifiedCompiler/include"
+          - "$(SRCROOT)/../../Sources/CXtoolCompilerBridge/include"
+        LIBRARY_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/Vendor/XtoolUnifiedCompiler"
+        OTHER_LDFLAGS:
+          - "$(inherited)"
+          - "-Wl,-force_load,$(SRCROOT)/Vendor/XtoolUnifiedCompiler/libXtoolUnifiedCompiler.a"
+          - "-lc++"
+          - "-framework"
+          - "Foundation"
+          - "-framework"
+          - "CoreFoundation"
+          - "-framework"
+          - "Security"
+          - "-framework"
+          - "SystemConfiguration"
+
+schemes:
+  XtoolNativeHostApp:
+    build:
+      targets:
+        XtoolNativeHostApp: all
