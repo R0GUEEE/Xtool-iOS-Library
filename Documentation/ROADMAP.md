@@ -40,7 +40,7 @@
 - [x] code signing through XKit-compatible primitives
 - [x] IPA export
 - [x] subprocess-free pure Swift ZIP writer
-- [ ] provisioning/profile generation through XKit DeveloperServices
+- [x] provisioning/profile generation through XKit DeveloperServices
 
 ## 1.0
 - [ ] Build a minimal SwiftUI app entirely inside an iOS application
