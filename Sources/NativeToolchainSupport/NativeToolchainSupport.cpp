@@ -1,8 +1,58 @@
 #include "NativeToolchainSupport.h"
 #include "CXtoolCompilerBridge.h"
 
+#ifndef XTOOL_ENABLE_EMBEDDED_CLANG
+#define XTOOL_ENABLE_EMBEDDED_CLANG 0
+#endif
+
 #ifndef XTOOL_ENABLE_EMBEDDED_LLD
 #define XTOOL_ENABLE_EMBEDDED_LLD 0
+#endif
+
+#if XTOOL_ENABLE_EMBEDDED_CLANG
+
+#include "llvm/Support/LLVMDriver.h"
+
+#include <vector>
+
+extern int clang_main(
+    int argc,
+    char **argv,
+    const llvm::ToolContext &tool_context
+);
+
+static int32_t xtool_clang_entrypoint(
+    int32_t argc,
+    const char * const *argv,
+    const char *working_directory
+) {
+    (void)working_directory;
+
+    std::vector<char *> arguments;
+    arguments.reserve(static_cast<size_t>(argc) + 1);
+    arguments.push_back(const_cast<char *>("clang"));
+
+    for (int32_t index = 0; index < argc; ++index) {
+        arguments.push_back(
+            const_cast<char *>(argv[index])
+        );
+    }
+
+    const llvm::ToolContext context {
+        arguments[0],
+        nullptr,
+        false
+    };
+
+    return static_cast<int32_t>(
+        clang_main(
+            static_cast<int>(arguments.size()),
+            arguments.data(),
+            context
+        )
+    );
+}
+
 #endif
 
 #if XTOOL_ENABLE_EMBEDDED_LLD
@@ -53,10 +103,24 @@ static int32_t xtool_lld_macho_entrypoint(
 #endif
 
 void xtool_native_toolchain_register_available_backends(void) {
+#if XTOOL_ENABLE_EMBEDDED_CLANG
+    xtool_register_clang(
+        xtool_clang_entrypoint
+    );
+#endif
+
 #if XTOOL_ENABLE_EMBEDDED_LLD
     xtool_register_lld_macho(
         xtool_lld_macho_entrypoint
     );
+#endif
+}
+
+int32_t xtool_native_toolchain_has_clang(void) {
+#if XTOOL_ENABLE_EMBEDDED_CLANG
+    return 1;
+#else
+    return 0;
 #endif
 }
 
