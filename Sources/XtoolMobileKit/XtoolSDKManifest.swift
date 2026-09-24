@@ -41,6 +41,10 @@ public struct XtoolSDKManifest: Codable, Sendable, Equatable {
     public let sdkVersion: String
     public let targetTriple: String
     public let minimumIOSVersion: String
+    public let swiftResourcesPath: String?
+    public let includeSearchPaths: [String]
+    public let librarySearchPaths: [String]
+    public let frameworkSearchPaths: [String]
     public let components: [Component]
 
     public init(
@@ -51,6 +55,10 @@ public struct XtoolSDKManifest: Codable, Sendable, Equatable {
         sdkVersion: String,
         targetTriple: String = "arm64-apple-ios",
         minimumIOSVersion: String,
+        swiftResourcesPath: String? = nil,
+        includeSearchPaths: [String] = [],
+        librarySearchPaths: [String] = [],
+        frameworkSearchPaths: [String] = [],
         components: [Component]
     ) {
         self.formatVersion = formatVersion
@@ -60,6 +68,10 @@ public struct XtoolSDKManifest: Codable, Sendable, Equatable {
         self.sdkVersion = sdkVersion
         self.targetTriple = targetTriple
         self.minimumIOSVersion = minimumIOSVersion
+        self.swiftResourcesPath = swiftResourcesPath
+        self.includeSearchPaths = includeSearchPaths
+        self.librarySearchPaths = librarySearchPaths
+        self.frameworkSearchPaths = frameworkSearchPaths
         self.components = components
     }
 
@@ -83,6 +95,22 @@ public struct XtoolSDKManifest: Codable, Sendable, Equatable {
             throw XtoolMobileError.invalidSDK(
                 "SDK manifest contains duplicate component identifiers."
             )
+        }
+
+        let declaredPaths =
+            [swiftResourcesPath].compactMap { $0 }
+            + includeSearchPaths
+            + librarySearchPaths
+            + frameworkSearchPaths
+
+        for path in declaredPaths {
+            guard !path.isEmpty,
+                  !path.hasPrefix("/"),
+                  !path.contains("..") else {
+                throw XtoolMobileError.invalidSDK(
+                    "Invalid SDK search path: \(path)"
+                )
+            }
         }
 
         for component in components {
