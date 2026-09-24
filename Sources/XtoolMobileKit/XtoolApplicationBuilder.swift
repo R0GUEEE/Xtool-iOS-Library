@@ -104,3 +104,22 @@ public struct XtoolApplicationBuilder: Sendable {
         )
     }
 }
+
+
+public extension XtoolApplicationBuilder {
+    static func native(
+        sdk: XtoolSDK,
+        packaging: XtoolPackagingPipeline = .init()
+    ) -> Self {
+        let bridge = XtoolNativeCompilerBridge()
+        let executor = XtoolEmbeddedToolExecutor(
+            bridge: bridge
+        )
+
+        return .init(
+            sdk: sdk,
+            toolExecutor: executor,
+            packaging: packaging
+        )
+    }
+}
