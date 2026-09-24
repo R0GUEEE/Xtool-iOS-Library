@@ -33,9 +33,10 @@
 - [x] subprocess-free execution API for iOS
 - [x] explicit compile/link build plans
 - [x] embedded Swift/LLVM bridge API
-- [ ] concrete native Swift frontend bridge implementation
+- [x] Swift frontend adapter integration layer
 - [x] Clang adapter integration layer
 - [x] Mach-O LLD adapter integration layer
+- [ ] produce/link iOS-compatible Swift frontend static libraries
 - [ ] produce/link iOS-compatible Clang + LLD static libraries
 
 ## 0.5 — Packaging/signing
