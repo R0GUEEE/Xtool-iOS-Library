@@ -6,6 +6,10 @@ public enum XtoolNativeToolchainSupport {
         xtool_native_toolchain_register_available_backends()
     }
 
+    public static var hasEmbeddedClang: Bool {
+        xtool_native_toolchain_has_clang() != 0
+    }
+
     public static var hasEmbeddedLLDMachO: Bool {
         xtool_native_toolchain_has_lld_macho() != 0
     }
