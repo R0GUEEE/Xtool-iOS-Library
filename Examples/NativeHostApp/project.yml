@@ -37,6 +37,7 @@ targets:
         CLANG_CXX_LIBRARY: libc++
         HEADER_SEARCH_PATHS:
           - "$(inherited)"
+          - "$(SRCROOT)/Vendor/XtoolUnifiedCompiler/include-generated"
           - "$(SRCROOT)/Vendor/XtoolUnifiedCompiler/include"
           - "$(SRCROOT)/../../Sources/CXtoolCompilerBridge/include"
         LIBRARY_SEARCH_PATHS:

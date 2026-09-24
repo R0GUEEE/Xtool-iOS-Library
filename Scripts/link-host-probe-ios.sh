@@ -6,6 +6,7 @@ OUTPUT="${OUTPUT:-$PWD/.host-link-probe/XtoolCompilerHostProbe}"
 IOS_DEPLOYMENT_TARGET="${IOS_DEPLOYMENT_TARGET:-17.0}"
 
 ARCHIVE="$TOOLCHAIN_ROOT/libXtoolUnifiedCompiler.a"
+GENERATED_INCLUDES="$TOOLCHAIN_ROOT/include-generated"
 INCLUDES="$TOOLCHAIN_ROOT/include"
 SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
 CLANG="$(xcrun --find clang++)"
@@ -15,8 +16,8 @@ if [ ! -f "$ARCHIVE" ]; then
   exit 1
 fi
 
-if [ ! -d "$INCLUDES" ]; then
-  echo "Missing unified headers: $INCLUDES" >&2
+if [ ! -d "$INCLUDES" ] || [ ! -d "$GENERATED_INCLUDES" ]; then
+  echo "Missing unified headers: $GENERATED_INCLUDES and/or $INCLUDES" >&2
   exit 1
 fi
 
@@ -32,6 +33,9 @@ COMMON=(
   -std=c++17
   -fexceptions
   -frtti
+  # The generated root comes first: it is where the build's own <swift/bridging>
+  # header lives, and the source root has a directory of the same name.
+  -I "$GENERATED_INCLUDES"
   -I "$INCLUDES"
   -I "$PWD/Sources/CXtoolCompilerBridge/include"
 )

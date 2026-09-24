@@ -19,6 +19,7 @@ required=(
   "$DESTINATION/XtoolUnifiedCompiler.libraries.txt"
   "$DESTINATION/xtool-unified-toolchain.json"
   "$DESTINATION/include"
+  "$DESTINATION/include-generated"
 )
 
 for path in "${required[@]}"; do

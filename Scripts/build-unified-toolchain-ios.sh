@@ -13,6 +13,9 @@ BUILD_NATIVE="$ROOT/build-native-tools"
 BUILD_CMARK_NATIVE="$ROOT/build-native-cmark"
 BUILD_IOS="$ROOT/build-ios"
 INSTALL="$ROOT/install-ios"
+# Two header roots; see the staging step below for why they cannot be merged.
+SOURCE_INCLUDE="$INSTALL/include"
+GENERATED_INCLUDE="$INSTALL/include-generated"
 
 command -v git >/dev/null
 command -v cmake >/dev/null
@@ -66,53 +69,74 @@ cmake -S "$LLVM_SRC" -B "$BUILD_IOS" -G Ninja   $CMAKE_LAUNCHER_ARGS   -DCMAKE_B
 # Build only the library targets required by the embedded bridge.
 cmake --build "$BUILD_IOS" --target   swiftFrontendTool   clangFrontendTool   clangDriver   lldCommon   lldMachO
 
-mkdir -p   "$INSTALL/lib"   "$INSTALL/include"
+mkdir -p   "$INSTALL/lib"   "$INSTALL/include"   "$GENERATED_INCLUDE"
 
 # Keep all revision-matched static libraries from this build graph.
 find "$BUILD_IOS/lib" -type f -name '*.a' -exec cp {} "$INSTALL/lib/" \;
 
-# Merge one header tree into the install tree.
+# Merge one header tree into an install root.
 #
-# `-L` is load-bearing twice over:
-#   * the build tree mirrors headers as *symlinks* into the source checkout
-#     (the `Generating .../include/swift/bridging` step at the end of the build
-#     is one of them), and BSD `cp -R` refuses to replace a directory that a
-#     previous tree already staged with a symlink:
-#         cp: .../install-ios/include/./swift/bridging: Is a directory
-#     which is how every run of this workflow died *after* a complete build;
-#   * an artifact that ships a link into /Users/runner/... is dead on the
-#     device anyway — the tree has to be self-contained.
+# `-L` is load-bearing: the build tree mirrors headers as *symlinks* into the
+# source checkout, and an artifact that ships a link into /Users/runner/... is
+# dead on the device. Dereferencing them also leaves no symlink to collide.
 stage_headers() {
-  local source="$1"
+  local source="$1" destination="$2"
 
-  cp -R -L "$source/." "$INSTALL/include/"
+  cp -R -L "$source/." "$destination/"
 }
 
-# Preserve standard include layout.
-stage_headers "$SWIFT_SRC/include"
-stage_headers "$SOURCE_ROOT/llvm-project/llvm/include"
-stage_headers "$SOURCE_ROOT/llvm-project/clang/include"
-stage_headers "$SOURCE_ROOT/llvm-project/lld/include"
+# Preserve the source include layout.
+#
+# This goes into its own root because the build tree and the source trees
+# disagree about one path: the build *generates a file* at `swift/bridging` (the
+# C++ interop header included as <swift/bridging>) while the sources have a
+# directory of the same name (`include/swift/Bridging/`, holding ASTGen.h and
+# MacroEvaluation.h). On a case-insensitive filesystem those are one path, so
+# merging the two trees into a single root cannot work — BSD cp refuses to put
+# the generated file where the source directory already is:
+#     cp: .../install-ios/include/./swift/bridging: Is a directory
+# which is how every run of this workflow died, *after* a complete build, from
+# the commit that merged the roots onwards. Consumers search the generated root
+# first, the order a normal Swift/LLVM cross-build uses.
+stage_headers "$SWIFT_SRC/include" "$SOURCE_INCLUDE"
+stage_headers "$SOURCE_ROOT/llvm-project/llvm/include" "$SOURCE_INCLUDE"
+stage_headers "$SOURCE_ROOT/llvm-project/clang/include" "$SOURCE_INCLUDE"
+stage_headers "$SOURCE_ROOT/llvm-project/lld/include" "$SOURCE_INCLUDE"
 
-# Overlay generated headers.
+# Generated headers, in their own root.
 for generated in   "$BUILD_IOS/include"   "$BUILD_IOS/tools/clang/include"   "$BUILD_IOS/tools/swift/include"
 do
   if [ -d "$generated" ]; then
-    stage_headers "$generated"
+    stage_headers "$generated" "$GENERATED_INCLUDE"
   fi
 done
 
-# A symlink here would point into the runner's checkout, so fail loudly rather
-# than publish an artifact that cannot be consumed.
-if [ -n "$(find "$INSTALL/include" -type l -print -quit)" ]; then
-  echo "Header tree still contains symlinks after staging:" >&2
-  find "$INSTALL/include" -type l -print >&2
+# A symlink in either root would point into the runner's checkout, so fail
+# loudly rather than publish an artifact that cannot be consumed.
+for root in "$SOURCE_INCLUDE" "$GENERATED_INCLUDE"; do
+  if [ -n "$(find "$root" -type l -print -quit)" ]; then
+    echo "Header tree still contains symlinks after staging: $root" >&2
+    find "$root" -type l -print >&2
+    exit 1
+  fi
+done
+
+if [ ! -d "$SOURCE_INCLUDE/llvm" ] || [ ! -d "$SOURCE_INCLUDE/clang" ] || [ ! -d "$SOURCE_INCLUDE/lld" ]; then
+  echo "Staged source header tree is incomplete under $SOURCE_INCLUDE" >&2
   exit 1
 fi
 
-if [ ! -d "$INSTALL/include/llvm" ] || [ ! -d "$INSTALL/include/clang" ]; then
-  echo "Staged header tree is incomplete under $INSTALL/include" >&2
-  exit 1
+# The path the two roots disagree about. Record which shape the build produced
+# instead of assuming it: if this is ever a directory, the split above is no
+# longer needed and the reason for it should be revisited.
+if [ -e "$GENERATED_INCLUDE/swift/bridging" ]; then
+  if [ -f "$GENERATED_INCLUDE/swift/bridging" ]; then
+    echo "Generated swift/bridging is a regular file, as expected."
+  else
+    echo "::warning::$GENERATED_INCLUDE/swift/bridging is not a regular file"
+  fi
+else
+  echo "::warning::the build produced no $GENERATED_INCLUDE/swift/bridging"
 fi
 
 cat > "$INSTALL/xtool-unified-toolchain.json" <<EOF
@@ -123,6 +147,10 @@ cat > "$INSTALL/xtool-unified-toolchain.json" <<EOF
   "minimumIOSVersion": "$IOS_DEPLOYMENT_TARGET",
   "targetTriple": "$TARGET_TRIPLE",
   "buildType": "$BUILD_TYPE",
+  "includeRoots": [
+    "include-generated",
+    "include"
+  ],
   "components": [
     "swiftFrontendTool",
     "clangFrontendTool",
@@ -135,3 +163,6 @@ EOF
 
 echo "Unified compiler libraries staged at:"
 echo "  $INSTALL"
+echo "Header roots, search order:"
+echo "  $GENERATED_INCLUDE"
+echo "  $SOURCE_INCLUDE"

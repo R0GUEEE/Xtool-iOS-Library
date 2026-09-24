@@ -32,7 +32,7 @@ to the iOS application target.
 It configures:
 
 - C++17
-- compiler header search paths
+- compiler header search paths (the generated root, then the source root)
 - the merged static archive
 - baseline Apple frameworks used by the compiler host
 

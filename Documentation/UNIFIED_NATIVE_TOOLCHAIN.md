@@ -33,9 +33,15 @@ containing:
 libXtoolUnifiedCompiler.a
 XtoolUnifiedCompiler.libraries.txt
 xtool-unified-toolchain.json
+include-generated/
 include/
 lib/
 ```
+
+The two header roots are searched in the order listed, and they are deliberately
+not merged: the build *generates a file* at `swift/bridging` (the C++ interop
+header included as `<swift/bridging>`) where the sources have a *directory* of the
+same name, and on a case-insensitive filesystem one path cannot be both.
 
 ## Embedded entry points
 
