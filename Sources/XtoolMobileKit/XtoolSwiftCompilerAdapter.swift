@@ -34,6 +34,34 @@ public struct XtoolSwiftCompilerAdapter: Sendable {
             "-parse-as-library"
         ]
 
+        if let relative = toolchain.sdk.manifest.swiftResourcesPath {
+            arguments += [
+                "-resource-dir",
+                toolchain.sdk.rootURL.appendingPathComponent(relative).path
+            ]
+        }
+
+        for relative in toolchain.sdk.manifest.includeSearchPaths {
+            arguments += [
+                "-I",
+                toolchain.sdk.rootURL.appendingPathComponent(relative).path
+            ]
+        }
+
+        for relative in toolchain.sdk.manifest.librarySearchPaths {
+            arguments += [
+                "-L",
+                toolchain.sdk.rootURL.appendingPathComponent(relative).path
+            ]
+        }
+
+        for relative in toolchain.sdk.manifest.frameworkSearchPaths {
+            arguments += [
+                "-F",
+                toolchain.sdk.rootURL.appendingPathComponent(relative).path
+            ]
+        }
+
         switch options.optimization {
         case .debug:
             arguments += ["-Onone", "-g"]
