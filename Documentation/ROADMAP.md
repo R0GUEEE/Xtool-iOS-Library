@@ -32,7 +32,9 @@
 - [x] resource compiler integration
 - [x] subprocess-free execution API for iOS
 - [x] explicit compile/link build plans
-- [ ] concrete embedded Swift/LLVM entry-point bridge
+- [x] embedded Swift/LLVM bridge API
+- [ ] concrete native Swift frontend bridge implementation
+- [ ] concrete native Clang/LLD bridge implementation
 
 ## 0.5 — Packaging/signing
 - [x] app bundle assembly
