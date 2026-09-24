@@ -23,14 +23,15 @@ public struct XtoolSwiftCompilerAdapter: Sendable {
             )
         }
 
-        let swiftc = try toolchain.swiftCompilerURL
+        let swiftFrontend = try toolchain.swiftCompilerURL
         let sdkRoot = try toolchain.sdkRootURL
 
         var arguments = [
+            "-frontend",
+            "-c",
             "-target", options.deploymentTargetTriple,
             "-sdk", sdkRoot.path,
             "-module-name", options.moduleName,
-            "-emit-object",
             "-parse-as-library"
         ]
 
@@ -80,7 +81,7 @@ public struct XtoolSwiftCompilerAdapter: Sendable {
         ]
 
         return .init(
-            executableURL: swiftc,
+            executableURL: swiftFrontend,
             arguments: arguments,
             workingDirectory: outputDirectory
         )
