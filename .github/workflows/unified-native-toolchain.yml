@@ -16,6 +16,10 @@ on:
       - main
     paths:
       - ".github/workflows/unified-native-toolchain.yml"
+      - "Scripts/build-unified-toolchain-ios.sh"
+      - "Scripts/package-unified-toolchain-ios.sh"
+      - "Scripts/merge-static-archives.sh"
+      - "Scripts/validate-unified-toolchain.sh"
 
 jobs:
   unified-ios:
