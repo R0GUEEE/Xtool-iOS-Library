@@ -6,6 +6,28 @@ public struct XtoolNativeCompilerBridge: XtoolEmbeddedToolBridge {
 
     public init() {}
 
+    public static func registerSwiftFrontend(
+        _ entrypoint: xtool_compiler_entrypoint_t?
+    ) {
+        xtool_register_swift_frontend(entrypoint)
+    }
+
+    public static func registerClang(
+        _ entrypoint: xtool_compiler_entrypoint_t?
+    ) {
+        xtool_register_clang(entrypoint)
+    }
+
+    public static func registerLLDMachO(
+        _ entrypoint: xtool_compiler_entrypoint_t?
+    ) {
+        xtool_register_lld_macho(entrypoint)
+    }
+
+    public static var currentCapabilities: XtoolNativeCompilerCapabilities {
+        XtoolNativeCompilerBridge().capabilities
+    }
+
     public var capabilities: XtoolNativeCompilerCapabilities {
         .init(
             hasSwiftFrontend: xtool_has_swift_frontend() != 0,
