@@ -3,6 +3,10 @@ name: Unified Native Toolchain
 on:
   workflow_dispatch:
     inputs:
+      release_tag:
+        description: Versioned compiler release tag
+        required: true
+        default: compiler-v0.1.0
       swift_scheme:
         description: Swift update-checkout scheme
         required: true
@@ -11,31 +15,45 @@ on:
         description: Minimum iOS version
         required: true
         default: "17.0"
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/unified-native-toolchain.yml"
-      - "Scripts/build-unified-toolchain-ios.sh"
-      - "Scripts/package-unified-toolchain-ios.sh"
-      - "Scripts/merge-static-archives.sh"
-      - "Scripts/validate-unified-toolchain.sh"
 
 jobs:
   unified-ios:
     runs-on: macos-26
     timeout-minutes: 360
+    permissions:
+      contents: write
+
+    env:
+      SCCACHE_DIR: ${{ github.workspace }}/.sccache
+      SCCACHE_CACHE_SIZE: 8G
 
     steps:
       - uses: actions/checkout@v6
 
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .sccache
+            .unified-toolchain/source
+          key: unified-compiler-${{ runner.os }}-${{ inputs.swift_scheme }}-${{ inputs.deployment_target }}-v2
+          restore-keys: |
+            unified-compiler-${{ runner.os }}-${{ inputs.swift_scheme }}-
+
       - name: Install build tools
-        run: brew install cmake ninja
+        run: brew install cmake ninja sccache
+
+      - name: Start sccache
+        run: |
+          sccache --start-server || true
+          sccache --zero-stats || true
 
       - name: Build revision-locked Swift Clang LLD
         env:
-          SWIFT_SCHEME: ${{ inputs.swift_scheme || 'release/6.2' }}
-          IOS_DEPLOYMENT_TARGET: ${{ inputs.deployment_target || '17.0' }}
+          SWIFT_SCHEME: ${{ inputs.swift_scheme }}
+          IOS_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
         run: |
           chmod +x Scripts/build-unified-toolchain-ios.sh
           Scripts/build-unified-toolchain-ios.sh
@@ -45,9 +63,25 @@ jobs:
           chmod +x Scripts/package-unified-toolchain-ios.sh
           Scripts/package-unified-toolchain-ios.sh
 
-      - name: Upload unified compiler artifact
+      - name: Show cache statistics
+        if: always()
+        run: sccache --show-stats || true
+
+      - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: XtoolUnifiedCompiler-ios-arm64
           path: .unified-toolchain/XtoolUnifiedCompiler-ios-arm64.tar.gz
           if-no-files-found: error
+
+      - name: Publish versioned compiler release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG"               .unified-toolchain/XtoolUnifiedCompiler-ios-arm64.tar.gz               --clobber
+          else
+            gh release create "$TAG"               .unified-toolchain/XtoolUnifiedCompiler-ios-arm64.tar.gz               --title "Xtool iOS Compiler $TAG"               --notes "Prebuilt arm64 iPhoneOS Swift/Clang/LLD compiler artifact."
+          fi
