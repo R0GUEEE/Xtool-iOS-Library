@@ -9,6 +9,7 @@ extern "C" {
 
 void xtool_native_toolchain_register_available_backends(void);
 
+int32_t xtool_native_toolchain_has_clang(void);
 int32_t xtool_native_toolchain_has_lld_macho(void);
 
 #ifdef __cplusplus
