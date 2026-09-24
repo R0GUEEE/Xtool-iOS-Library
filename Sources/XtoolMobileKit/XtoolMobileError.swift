@@ -11,6 +11,10 @@ public enum XtoolMobileError: LocalizedError, Sendable {
     case invalidBuildPlan(String)
     case toolExecutionUnavailable(String)
     case toolFailed(tool: String, exitCode: Int32, output: String)
+    case invalidBundlePlan(String)
+    case invalidSigningIdentity(String)
+    case signingUnavailable
+    case archiveExportUnavailable
 
     public var errorDescription: String? {
         switch self {
@@ -35,6 +39,14 @@ public enum XtoolMobileError: LocalizedError, Sendable {
         case .toolFailed(let tool, let exitCode, let output):
             let detail = output.isEmpty ? "" : " \(output)"
             return "\(tool) failed with exit code \(exitCode).\(detail)"
+        case .invalidBundlePlan(let message):
+            return "Invalid app bundle plan: \(message)"
+        case .invalidSigningIdentity(let message):
+            return "Invalid signing identity: \(message)"
+        case .signingUnavailable:
+            return "No signing backend is available."
+        case .archiveExportUnavailable:
+            return "No IPA archive exporter is available."
         }
     }
 }
