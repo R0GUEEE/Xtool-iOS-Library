@@ -55,3 +55,11 @@ jobs:
           name: XtoolCompilerHostProbe-ios-arm64
           path: .host-link-probe/XtoolCompilerHostProbe
           if-no-files-found: error
+
+      - name: Promote validated compiler artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: XtoolValidatedUnifiedCompiler-ios-arm64
+          path: .artifacts/unified/XtoolUnifiedCompiler-ios-arm64.tar.gz
+          if-no-files-found: error
