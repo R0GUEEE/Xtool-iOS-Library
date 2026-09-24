@@ -63,6 +63,20 @@ public struct XtoolLinkerAdapter: Sendable {
             "-o", outputDirectory.appendingPathComponent(options.outputName).path
         ]
 
+        for relative in toolchain.sdk.manifest.librarySearchPaths {
+            arguments += [
+                "-L",
+                toolchain.sdk.rootURL.appendingPathComponent(relative).path
+            ]
+        }
+
+        for relative in toolchain.sdk.manifest.frameworkSearchPaths {
+            arguments += [
+                "-F",
+                toolchain.sdk.rootURL.appendingPathComponent(relative).path
+            ]
+        }
+
         for path in options.librarySearchPaths {
             arguments += ["-L", path.path]
         }
