@@ -22,14 +22,23 @@ public struct XtoolStoredZIPArchiveExecutor: XtoolArchiveExecutor {
         for file in files {
             try Task.checkCancellation()
 
-            let relativePath = file.path
-                .dropFirst(directory.path.count)
-                .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            let relativePath = String(
+                file.path.dropFirst(directory.path.count)
+            ).trimmingCharacters(
+                in: CharacterSet(charactersIn: "/")
+            )
 
             let nameData = Data(relativePath.utf8)
             let data = try Data(contentsOf: file)
             let crc = CRC32.checksum(data)
             let offset = UInt32(archive.count)
+
+            let attributes = try fileManager.attributesOfItem(
+                atPath: file.path
+            )
+            let permissions = (attributes[.posixPermissions] as? NSNumber)?
+                .uint32Value ?? 0o644
+            let unixMode = UInt32(0o100000) | permissions
 
             archive.appendUInt32LE(0x04034b50)
             archive.appendUInt16LE(20)
@@ -60,7 +69,7 @@ public struct XtoolStoredZIPArchiveExecutor: XtoolArchiveExecutor {
             centralDirectory.appendUInt16LE(0)
             centralDirectory.appendUInt16LE(0)
             centralDirectory.appendUInt16LE(0)
-            centralDirectory.appendUInt32LE(0)
+            centralDirectory.appendUInt32LE(unixMode << 16)
             centralDirectory.appendUInt32LE(offset)
             centralDirectory.append(nameData)
         }
