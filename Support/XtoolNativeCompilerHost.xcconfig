@@ -1,0 +1,12 @@
+// Point this at the extracted unified compiler artifact.
+XTOOL_NATIVE_TOOLCHAIN_ROOT = $(SRCROOT)/Vendor/XtoolUnifiedCompiler
+
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+CLANG_CXX_LANGUAGE_STANDARD = c++17
+CLANG_CXX_LIBRARY = libc++
+
+HEADER_SEARCH_PATHS = $(inherited) "$(XTOOL_NATIVE_TOOLCHAIN_ROOT)/include"
+LIBRARY_SEARCH_PATHS = $(inherited) "$(XTOOL_NATIVE_TOOLCHAIN_ROOT)"
+
+OTHER_LDFLAGS = $(inherited) -Wl,-force_load,"$(XTOOL_NATIVE_TOOLCHAIN_ROOT)/libXtoolUnifiedCompiler.a" -lc++
+OTHER_LDFLAGS = $(OTHER_LDFLAGS) -framework Foundation -framework CoreFoundation -framework Security -framework SystemConfiguration
