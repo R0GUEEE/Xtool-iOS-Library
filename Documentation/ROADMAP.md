@@ -29,7 +29,7 @@
 - [x] Swift compiler adapter
 - [x] clang adapter
 - [x] linker adapter
-- [ ] resource compiler integration
+- [x] resource compiler integration
 - [x] subprocess-free execution API for iOS
 - [x] explicit compile/link build plans
 - [ ] concrete embedded Swift/LLVM entry-point bridge
