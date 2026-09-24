@@ -75,7 +75,7 @@ public struct NativeIOSApplicationBuildBackend: XtoolBuildBackend {
         }
 
         let artifactURL = outputDirectory.appendingPathComponent(
-            "(productName).ipa"
+            "\(productName).ipa"
         )
         if fileManager.fileExists(atPath: artifactURL.path) {
             try fileManager.removeItem(at: artifactURL)
