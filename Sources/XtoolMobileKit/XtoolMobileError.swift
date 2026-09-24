@@ -15,6 +15,7 @@ public enum XtoolMobileError: LocalizedError, Sendable {
     case invalidSigningIdentity(String)
     case signingUnavailable
     case archiveExportUnavailable
+    case nativeCompilerHostNotReady([String])
 
     public var errorDescription: String? {
         switch self {
@@ -47,6 +48,8 @@ public enum XtoolMobileError: LocalizedError, Sendable {
             return "No signing backend is available."
         case .archiveExportUnavailable:
             return "No IPA archive exporter is available."
+        case .nativeCompilerHostNotReady(let missing):
+            return "Native compiler host is missing: \(missing.joined(separator: ", "))."
         }
     }
 }
