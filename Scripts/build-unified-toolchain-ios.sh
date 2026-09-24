@@ -71,19 +71,49 @@ mkdir -p   "$INSTALL/lib"   "$INSTALL/include"
 # Keep all revision-matched static libraries from this build graph.
 find "$BUILD_IOS/lib" -type f -name '*.a' -exec cp {} "$INSTALL/lib/" \;
 
+# Merge one header tree into the install tree.
+#
+# `-L` is load-bearing twice over:
+#   * the build tree mirrors headers as *symlinks* into the source checkout
+#     (the `Generating .../include/swift/bridging` step at the end of the build
+#     is one of them), and BSD `cp -R` refuses to replace a directory that a
+#     previous tree already staged with a symlink:
+#         cp: .../install-ios/include/./swift/bridging: Is a directory
+#     which is how every run of this workflow died *after* a complete build;
+#   * an artifact that ships a link into /Users/runner/... is dead on the
+#     device anyway — the tree has to be self-contained.
+stage_headers() {
+  local source="$1"
+
+  cp -R -L "$source/." "$INSTALL/include/"
+}
+
 # Preserve standard include layout.
-cp -R "$SWIFT_SRC/include/." "$INSTALL/include/"
-cp -R "$SOURCE_ROOT/llvm-project/llvm/include/." "$INSTALL/include/"
-cp -R "$SOURCE_ROOT/llvm-project/clang/include/." "$INSTALL/include/"
-cp -R "$SOURCE_ROOT/llvm-project/lld/include/." "$INSTALL/include/"
+stage_headers "$SWIFT_SRC/include"
+stage_headers "$SOURCE_ROOT/llvm-project/llvm/include"
+stage_headers "$SOURCE_ROOT/llvm-project/clang/include"
+stage_headers "$SOURCE_ROOT/llvm-project/lld/include"
 
 # Overlay generated headers.
 for generated in   "$BUILD_IOS/include"   "$BUILD_IOS/tools/clang/include"   "$BUILD_IOS/tools/swift/include"
 do
   if [ -d "$generated" ]; then
-    cp -R "$generated/." "$INSTALL/include/"
+    stage_headers "$generated"
   fi
 done
+
+# A symlink here would point into the runner's checkout, so fail loudly rather
+# than publish an artifact that cannot be consumed.
+if [ -n "$(find "$INSTALL/include" -type l -print -quit)" ]; then
+  echo "Header tree still contains symlinks after staging:" >&2
+  find "$INSTALL/include" -type l -print >&2
+  exit 1
+fi
+
+if [ ! -d "$INSTALL/include/llvm" ] || [ ! -d "$INSTALL/include/clang" ]; then
+  echo "Staged header tree is incomplete under $INSTALL/include" >&2
+  exit 1
+fi
 
 cat > "$INSTALL/xtool-unified-toolchain.json" <<EOF
 {
