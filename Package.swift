@@ -4,8 +4,8 @@ import PackageDescription
 let package = Package(
     name: "XtoolMobileKit",
     platforms: [
-        .iOS(.v16),
-        .macOS(.v13)
+        .iOS(.v17),
+        .macOS(.v14)
     ],
     products: [
         .library(
@@ -16,14 +16,19 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/xtool-org/xtool",
-            .upToNextMinor(from: "1.20.0")
+            .upToNextMinor(from: "1.20.1")
+        ),
+        .package(
+            url: "https://github.com/jpsim/Yams",
+            from: "5.1.3"
         )
     ],
     targets: [
         .target(
             name: "XtoolMobileKit",
             dependencies: [
-                .product(name: "XKit", package: "xtool")
+                .product(name: "XKit", package: "xtool"),
+                .product(name: "Yams", package: "Yams")
             ]
         ),
         .testTarget(
