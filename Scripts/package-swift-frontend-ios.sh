@@ -20,7 +20,10 @@ if [ "$LIB_COUNT" = "0" ]; then
 fi
 
 chmod +x Scripts/merge-static-archives.sh
-Scripts/merge-static-archives.sh   "$INSTALL/lib"   "$MERGED"   "$MANIFEST"
+Scripts/merge-static-archives.sh "$INSTALL/lib" "$MERGED" "$MANIFEST"
+
+chmod +x Scripts/validate-native-archive.sh
+Scripts/validate-native-archive.sh "$MERGED" swift
 
 mkdir -p "$(dirname "$OUTPUT")"
 tar -C "$INSTALL" -czf "$OUTPUT" .
