@@ -13,11 +13,13 @@
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/FrontendTool/Utils.h"
 #include "clang/Serialization/PCHContainerOperations.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Host.h"
 
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -40,6 +42,7 @@ static int32_t xtool_run_clang_driver_in_process(
     std::vector<const char *> arguments;
     arguments.reserve(static_cast<size_t>(argc) + 1);
     arguments.push_back("clang");
+
     for (int32_t index = 0; index < argc; ++index) {
         arguments.push_back(argv[index]);
     }
@@ -111,9 +114,6 @@ static int32_t xtool_run_clang_driver_in_process(
     return success ? 0 : 1;
 }
 
-
-#include <cstdint>
-
 static int32_t xtool_host_clang(
     int32_t argc,
     const char * const *argv,
@@ -127,4 +127,9 @@ extern "C" void xtool_register_host_clang(void) {
     xtool_register_clang(
         xtool_host_clang
     );
+}
+
+__attribute__((constructor))
+static void xtool_auto_register_host_clang(void) {
+    xtool_register_host_clang();
 }
