@@ -1,36 +1,38 @@
 name: Native Host App
 
 on:
-  workflow_run:
-    workflows:
-      - Host Link Validation
-    types:
-      - completed
+  workflow_dispatch:
+    inputs:
+      compiler_tag:
+        description: Compiler release tag, or latest
+        required: true
+        default: latest
+  push:
+    branches:
+      - main
+    paths:
+      - "Examples/NativeHostApp/**"
+      - "Sources/XtoolMobileKit/**"
+      - "Sources/CXtoolCompilerBridge/**"
+      - "Support/**"
 
 jobs:
   build-host-app:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: macos-26
     timeout-minutes: 60
     permissions:
-      actions: read
       contents: read
 
     steps:
       - uses: actions/checkout@v6
 
-      - name: Download validated compiler
-        uses: actions/download-artifact@v5
-        with:
-          name: XtoolValidatedUnifiedCompiler-ios-arm64
-          path: .artifacts/unified
-          github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Install compiler artifact
+      - name: Install prebuilt compiler release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMPILER_TAG: ${{ inputs.compiler_tag || 'latest' }}
         run: |
-          chmod +x Scripts/install-unified-toolchain-artifact.sh
-          Scripts/install-unified-toolchain-artifact.sh             .artifacts/unified/XtoolUnifiedCompiler-ios-arm64.tar.gz             Examples/NativeHostApp/Vendor/XtoolUnifiedCompiler
+          chmod +x Scripts/fetch-prebuilt-compiler.sh
+          Scripts/fetch-prebuilt-compiler.sh             "$COMPILER_TAG"             Examples/NativeHostApp/Vendor/XtoolUnifiedCompiler
 
       - name: Install XcodeGen
         run: brew install xcodegen
